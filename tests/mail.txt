@@ -1,0 +1,82 @@
+Received: from AM9PR08MB6146.eurprd08.prod.outlook.com (2603:10a6:20b:2db::17)
+ by AM8PR08MB6436.eurprd08.prod.outlook.com with HTTPS; Mon, 27 Sep 2021
+ 06:43:19 +0000
+Authentication-Results: elise.de; dkim=none (message not signed)
+ header.d=none;elise.de; dmarc=none action=none header.from=elise.de;
+Received: from AM8PR08MB6436.eurprd08.prod.outlook.com (2603:10a6:20b:365::8)
+ by AM9PR08MB6146.eurprd08.prod.outlook.com (2603:10a6:20b:2db::17) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4544.15; Mon, 27 Sep
+ 2021 06:43:19 +0000
+Received: from AM8PR08MB6436.eurprd08.prod.outlook.com
+ ([fe80::181e:f7c7:fc15:97c7]) by AM8PR08MB6436.eurprd08.prod.outlook.com
+ ([fe80::181e:f7c7:fc15:97c7%9]) with mapi id 15.20.4478.025; Mon, 27 Sep 2021
+ 06:43:19 +0000
+Content-Type: application/ms-tnef; name="winmail.dat"
+Content-Transfer-Encoding: binary
+From: Giacomo d'Antonio <giacomo.dantonio@elise.de>
+To: Giacomo d'Antonio <giacomo.dantonio@elise.de>
+Subject:
+ =?iso-8859-1?Q?Vorl=E4ufiges_Bremer_Endergebnis_steht_fest:_SPD_klar_vor_?=
+ =?iso-8859-1?Q?Gr=FCnen_und_CDU?=
+Thread-Topic:
+ =?iso-8859-1?Q?Vorl=E4ufiges_Bremer_Endergebnis_steht_fest:_SPD_klar_vor_?=
+ =?iso-8859-1?Q?Gr=FCnen_und_CDU?=
+Thread-Index: Adezau3CE7mLls5eShSUnVmhee+BQg==
+Date: Mon, 27 Sep 2021 06:43:18 +0000
+Message-ID:
+ <AM8PR08MB643614F3D5252A489E149F4AF4A79@AM8PR08MB6436.eurprd08.prod.outlook.com>
+Accept-Language: de-DE, en-US
+Content-Language: de-DE
+X-MS-Has-Attach:
+X-MS-Exchange-Organization-SCL: -1
+X-MS-TNEF-Correlator:
+ <AM8PR08MB643614F3D5252A489E149F4AF4A79@AM8PR08MB6436.eurprd08.prod.outlook.com>
+MIME-Version: 1.0
+X-MS-Exchange-Organization-MessageDirectionality: Originating
+X-MS-Exchange-Organization-AuthSource: AM8PR08MB6436.eurprd08.prod.outlook.com
+X-MS-Exchange-Organization-AuthAs: Internal
+X-MS-Exchange-Organization-AuthMechanism: 04
+X-MS-Exchange-Organization-Network-Message-Id:
+ 65b6d24e-551a-4cd4-08a1-08d9818217a1
+X-MS-PublicTrafficType: Email
+Return-Path: giacomo.dantonio@elise.de
+X-MS-Exchange-Organization-ExpirationStartTime: 27 Sep 2021 06:43:19.3396
+ (UTC)
+X-MS-Exchange-Organization-ExpirationStartTimeReason: OriginalSubmit
+X-MS-Exchange-Organization-ExpirationInterval: 1:00:00:00.0000000
+X-MS-Exchange-Organization-ExpirationIntervalReason: OriginalSubmit
+X-MS-Office365-Filtering-Correlation-Id: 65b6d24e-551a-4cd4-08a1-08d9818217a1
+X-MS-TrafficTypeDiagnostic: AM9PR08MB6146:
+X-MS-Oob-TLC-OOBClassifiers: OLM:873;
+X-Microsoft-Antispam: BCL:0;
+X-Forefront-Antispam-Report:
+ CIP:255.255.255.255;CTRY:;LANG:de;SCL:-1;SRV:;IPV:NLI;SFV:SKI;H:AM8PR08MB6436.eurprd08.prod.outlook.com;PTR:;CAT:NONE;SFS:;DIR:INB;
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 27 Sep 2021 06:43:19.0293
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: fdefcf7d-a92b-44f3-af7f-6b11855ba8c6
+X-MS-Exchange-CrossTenant-AuthSource: AM8PR08MB6436.eurprd08.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-Network-Message-Id: 65b6d24e-551a-4cd4-08a1-08d9818217a1
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: kCAqjUmgDdT073jXfCYDdrA8b6CMVLBU2VBZL13jjYheVpfnp14w+hzGcZqfJXBbNb6uBVRynzEOy4NnmIuJPyiDba0UQAmrJtlBX/lfCa0=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM9PR08MB6146
+X-MS-Exchange-Transport-EndToEndLatency: 00:00:00.5018451
+X-MS-Exchange-Processed-By-BccFoldering: 15.20.4478.025
+X-Microsoft-Antispam-Mailbox-Delivery:
+	ucf:0;jmr:0;auth:0;dest:I;ENG:(910001)(944506458)(944626604)(750132)(520011016)(706158);
+X-Microsoft-Antispam-Message-Info:
+	9b942EU4h+h2JqsU6RxILZB95lFYH55I9DELWRlroeeBkWGW7AnwthuOj9KbMrKWoeYsDZZzoIUYlnnVtVqo/8WSGBv5uJqhbfO9tlzMelyv76qEEszqJx/hFxOcPieZfGIyHPxz93qCxR9pO9VbVHQDefAEEmSkKUnAfhD239R5do4RRhNavfo+RZqZfJ5u+x24m1zidojxRmM9P+zC+jzhGyd/9eVGYb55FrnQDYkLJMc/A479qUXjDiGCAH0FzZDsqyTp+LLjtTG53PE/7gd5g2FCqXK+iAPXwd6zhoUUVu3Rw3O89A6IRFPTsBT68cxdpIzfrNhRkt4rRZmIDZVLwzVfYeiwvYyf/8NC8kJDy6bxFGv4WinfSVMyJiaU3yRONdCb0FBHSBrymLvmtvtQjAsjNrqF85NhBUvUVfj854kHsBg2sPUpP9uyfAUp89Kc2W2HgrYoRoUtW/XRKxPWu5r+BQ0xjVsEdRTKA74Xx75mhEcJZ7CQrb1TjpCeEw8Cm125UmKaZd4Be74HN5hsWhgl4mD+zGA0P5Hb76Xi0575WB4kC6i/iXyfCQGsIhnpFL9c4yv2bydSVZcYXDcoJqXEwNuwBBNCmrXyzv2KmR22UgsriXfUZMhTYz8rMcgp4NMQ7Q3L+ye9XBHyqWyMEoLR2YvFBF+9Utq4V+cXr1Nag0+H8Twbaz9GsuKBPtn6buOmQxUQy1ypV23fm5m4K2Ja/Z3bGY2dRT8FD+xZrKPBZKIMKBkCfDtXETg8
+
+Die Bremer haben die SPD mit mehr als 31 Prozent der Stimmen als stärkste Kraft gewählt. Die CDU 
+kommt auf mehr als 17 Prozent, die Grünen auf fast 21 Prozent.
+Während SPD und CDU im Bund nur knapp auseinander liegen, sieht die Lage im Land Bremen anders 
+aus. Wie die Landeswahlleitung nach der Auszählung in der Nacht zu Montag im Internet bekannt gab, 
+hat die SPD 31,47 Prozent der Zweitstimmen erhalten und liegt damit klar vor der CDU (17,25 Prozent). 
+Die Grünen kommen auf mehr als 20,83 Prozent der Stimmen, die FDP auf 9,3 Prozent. Anders als im 
+Bund liegen die Linken problemlos über der Fünf-Prozent-Hürde.
+In den beiden Wahlkreisen im Land Bremen haben die Sozialdemokratin Sarah Ryglewski und ihr 
+Bremerhavener Parteigenosse Uwe Schmidt ihre Direktmandate bei der Bundestagswahl verteidigt. Im 
+Land Bremen haben von 459.736 Wahlberechtigten insgesamt 330.140 Personen gewählt; das entspricht 
+einer Wahlbeteiligung von 71,81 Prozent.
