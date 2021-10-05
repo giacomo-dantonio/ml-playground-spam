@@ -126,7 +126,7 @@ def make_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-o",
         "--outpath",
-        default="train.data",
+        default="data.h5",
         help="A filepath for storing the processed data in an internal format.")
         
     return parser
@@ -148,4 +148,8 @@ if __name__ == "__main__":
  
     labeled_files = load_files(labeled_paths)
 
-    print(labeled_paths)
+    train = make_dataset(labeled_files)
+
+    outfile = os.path.abspath(args.outpath)
+    with pd.HDFStore(outfile) as store:
+        store["train"] = train
