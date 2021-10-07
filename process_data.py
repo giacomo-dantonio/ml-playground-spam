@@ -18,6 +18,8 @@ import pandas as pd
 import re
 import typing
 
+from sklearn import model_selection
+
 punctuation_exp = re.compile(r"[\!()\-[\]{};:'\"\\,<>./?@#$%^&*_~]")
 url_exp = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
 number_exp = re.compile(r"(?:\d{3}[\.,])?\d+(?:[\.,]\d+)?")
@@ -114,14 +116,32 @@ def make_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-s",
         "--strip-headers",
-        action="store_false",
+        action="store_true",
         help="Strip the email headers from the training data.")
 
     parser.add_argument(
         "-l",
         "--lowercase",
-        action="store_false",
+        action="store_true",
         help="Convert the email texts to lowercase.")
+
+    parser.add_argument(
+        "-r",
+        "--remove-punctuation",
+        action="store_true",
+        help="Remove punctuation from the email content.")
+
+    parser.add_argument(
+        "-n",
+        "--replace-numbers",
+        action="store_true",
+        help="Replace number with a placeholder string.")
+
+    parser.add_argument(
+        "-u",
+        "--replace-urls",
+        action="store_true",
+        help="Replace urls with a placeholder string.")
 
     parser.add_argument(
         "-o",
@@ -136,20 +156,53 @@ def make_labeled_paths(data_dir : str, label : bool) -> LabeledFiles:
         filepath = os.path.join(data_dir, filename)
         yield (filepath, label)
 
+def process(spam_dirs, ham_dirs, outfile,
+    strip_headers=False,
+    lowercase=False,
+    remove_punctuation=False,
+    replace_urls=False,
+    replace_numbers=False
+):
+    labeled_paths = []
+    for spam_dir in spam_dirs:
+        labeled_paths.extend(make_labeled_paths(spam_dir, True))
+    for ham_dir in ham_dirs:
+        labeled_paths.extend(make_labeled_paths(ham_dir, False))
+ 
+    labeled_files = [
+        (
+            process_file(
+                file_content,
+                strip_header=strip_headers,
+                lowercase=lowercase,
+                remove_punctuation=remove_punctuation,
+                replace_urls=replace_urls,
+                replace_numbers=replace_numbers),
+            label
+        )
+        for (file_content, label) in load_files(labeled_paths)
+    ]
+
+    ds = make_dataset(labeled_files)
+
+    with pd.HDFStore(outfile) as store:
+        split = model_selection.StratifiedShuffleSplit(n_splits=1, test_size=0.2)
+        for train_index, test_index in split.split(ds, ds["spam"]):
+            store["train"] = ds.loc[train_index]
+            store["test"] = ds.loc[test_index]
+
 if __name__ == "__main__":
     parser = make_argparser()
     args = parser.parse_args()
+    print(args)
 
-    labeled_paths = []
-    for spam_dir in args.spam:
-        labeled_paths.extend(make_labeled_paths(spam_dir, True))
-    for ham_dir in args.ham:
-        labeled_paths.extend(make_labeled_paths(ham_dir, False))
- 
-    labeled_files = load_files(labeled_paths)
-
-    train = make_dataset(labeled_files)
-
-    outfile = os.path.abspath(args.outpath)
-    with pd.HDFStore(outfile) as store:
-        store["train"] = train
+    process(
+        spam_dirs=args.spam,
+        ham_dirs=args.ham,
+        outfile=os.path.abspath(args.outpath),
+        strip_headers=args.strip_headers,
+        lowercase=args.lowercase,
+        remove_punctuation=args.remove_punctuation,
+        replace_urls=args.replace_urls,
+        replace_numbers=args.replace_numbers
+    )
