@@ -25,7 +25,7 @@ url_exp = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9
 number_exp = re.compile(r"(?:\d{3}[\.,])?\d+(?:[\.,]\d+)?")
 
 LabeledPaths = typing.List[typing.Tuple[str, bool]]
-LabeledFiles = typing.Generator[typing.Tuple[str, bool], None, None]
+LabeledFiles = typing.Generator[typing.Tuple[str, str, bool], None, None]
 
 def load_files(labeled_paths : LabeledPaths) -> LabeledFiles:
     """
@@ -33,7 +33,7 @@ def load_files(labeled_paths : LabeledPaths) -> LabeledFiles:
     """
     for (filepath, spam) in labeled_paths:
         with open(filepath, encoding="iso-8859-1") as f:
-            yield (f.read(), spam)
+            yield (os.path.dirname(filepath), f.read(), spam)
 
 def process_file(
     content : str,
@@ -91,9 +91,10 @@ def process_file(
     return processed_content
 
 def make_dataset(labeled_files : LabeledFiles) -> pd.DataFrame:
-    features, labels = zip(*labeled_files)
+    paths, features, labels = zip(*labeled_files)
     return pd.DataFrame({
-        "mails": features,
+        "dirpath": paths,
+        "mail": features,
         "spam": labels
     })
 
@@ -151,7 +152,7 @@ def make_argparser() -> argparse.ArgumentParser:
         
     return parser
 
-def make_labeled_paths(data_dir : str, label : bool) -> LabeledFiles:
+def make_labeled_paths(data_dir : str, label : bool):
     for filename in os.listdir(os.path.abspath(data_dir)):
         filepath = os.path.join(data_dir, filename)
         yield (filepath, label)
@@ -171,6 +172,7 @@ def process(spam_dirs, ham_dirs, outfile,
  
     labeled_files = [
         (
+            dirpath,
             process_file(
                 file_content,
                 strip_header=strip_headers,
@@ -180,21 +182,20 @@ def process(spam_dirs, ham_dirs, outfile,
                 replace_numbers=replace_numbers),
             label
         )
-        for (file_content, label) in load_files(labeled_paths)
+        for (dirpath, file_content, label) in load_files(labeled_paths)
     ]
 
     ds = make_dataset(labeled_files)
 
     with pd.HDFStore(outfile) as store:
         split = model_selection.StratifiedShuffleSplit(n_splits=1, test_size=0.2)
-        for train_index, test_index in split.split(ds, ds["spam"]):
+        for train_index, test_index in split.split(ds, ds["dirpath"]):
             store["train"] = ds.loc[train_index]
             store["test"] = ds.loc[test_index]
 
 if __name__ == "__main__":
     parser = make_argparser()
     args = parser.parse_args()
-    print(args)
 
     process(
         spam_dirs=args.spam,

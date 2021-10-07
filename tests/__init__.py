@@ -12,10 +12,13 @@ class TestProcessData(unittest.TestCase):
         ]
 
         labeled_files = list(process_data.load_files(labeled_paths))
-        self.assertEqual("this is spam", labeled_files[0][0])
-        self.assertTrue(labeled_files[0][1])
-        self.assertEqual("this is ham", labeled_files[1][0])
-        self.assertFalse(labeled_files[1][1])
+        self.assertEqual(dirname, labeled_files[0][0])
+        self.assertEqual("this is spam", labeled_files[0][1])
+        self.assertTrue(labeled_files[0][2])
+
+        self.assertEqual(dirname, labeled_files[1][0])
+        self.assertEqual("this is ham", labeled_files[1][1])
+        self.assertFalse(labeled_files[1][2])
 
     def test_process_file_all_false(self):
         """If all input parameters are false, process_file doesn't change the content string"""
@@ -159,12 +162,12 @@ einer Wahlbeteiligung von 71,81 Prozent.
 
         expected_len = len(labeled_paths)
         self.assertEqual(expected_len, len(data["spam"]))
-        self.assertEqual(expected_len, len(data["mails"]))
+        self.assertEqual(expected_len, len(data["mail"]))
 
         for label in data["spam"]:
             self.assertTrue(label)
 
-        for filepath, mail in zip([fp for fp, _ in labeled_paths], data["mails"]):
+        for filepath, mail in zip([fp for fp, _ in labeled_paths], data["mail"]):
             with (open(filepath, encoding="iso-8859-1")) as f:
                 self.assertEqual(f.read(), mail)
 
