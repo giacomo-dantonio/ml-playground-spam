@@ -148,8 +148,8 @@ def make_argparser() -> argparse.ArgumentParser:
         "-o",
         "--outpath",
         default="data.h5",
-        help="A filepath for storing the processed data in an internal format.")
-        
+        help="A filepath for storing the processed data in the HDF5 format.")
+
     return parser
 
 def make_labeled_paths(data_dir : str, label : bool):
