@@ -4,20 +4,47 @@
 # * perform grid search on all the hyperparameters
 # * serialize the trained model to a file (use joblib)
 
-# TODO: find better estimator
+# TODO: add text preprocessing to the pipeline
 # TODO: use stratified k-fold for the grid search
-# TODO: use several classificators
+# TODO: grid searcg for all classifiers
 # TODO: replace verbose + print with logging library
+# TODO: add training time measurement to the metrics
 
 import argparse
 import pandas as pd
 import joblib
 
-from sklearn import model_selection
+from sklearn import discriminant_analysis
+from sklearn import ensemble
+from sklearn import gaussian_process
 from sklearn import linear_model
 from sklearn import metrics
+from sklearn import model_selection
+from sklearn import naive_bayes
+from sklearn import neighbors
+from sklearn import neural_network
 from sklearn import pipeline as pl
+from sklearn import svm
+from sklearn import tree
 from sklearn.feature_extraction import text
+
+classifiers = {
+    "AdaBoost": ensemble.AdaBoostClassifier(),
+    "Decision Tree": tree.DecisionTreeClassifier(max_depth=5),
+    # TypeError: A sparse matrix was passed, but dense data is required. Use X.toarray() to convert to a dense numpy array.
+    # "Gaussian Process": gaussian_process.GaussianProcessClassifier(1.0 * gaussian_process.kernels.RBF(1.0)),
+    "Linear SVM": svm.SVC(kernel="linear", C=0.025),
+    # TypeError: A sparse matrix was passed, but dense data is required. Use X.toarray() to convert to a dense numpy array.
+    # "Naive Bayes": naive_bayes.GaussianNB(),
+    "Nearest Neighbors": neighbors.KNeighborsClassifier(3),
+    "Neural Net": neural_network.MLPClassifier(alpha=1, max_iter=1000),
+    # TypeError: A sparse matrix was passed, but dense data is required. Use X.toarray() to convert to a dense numpy array.
+    # "QDA": discriminant_analysis.QuadraticDiscriminantAnalysis(),
+    # UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 due to no predicted samples. Use `zero_division` parameter to control this behavior.
+    # "Random Forest": ensemble.RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+    "RBF SVM": svm.SVC(gamma=2, C=1),  # best one so far
+    "SGD": linear_model.SGDClassifier()  # second best one
+}
 
 def make_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -54,19 +81,28 @@ def make_argparser() -> argparse.ArgumentParser:
         help="Display metrics computed on the test set."
     )
 
+    parser.add_argument(
+        "-c",
+        "--classifier",
+        default="SGD",
+        help="Choose the classifier used for the optimization. "
+             "The following values are allowed: %s." % ", ".join(classifiers.keys())
+    )
+
     return parser
 
-def train(data_filepath, outpath, gridsearch=None, verbose=False):
+def train(data_filepath, outpath, classifier_name="SGD", gridsearch=None, verbose=False):
+    classifier = classifiers.get(classifier_name, "SGD")
     train = pd.read_hdf(data_filepath, key="train")
 
     pipeline = pl.Pipeline([
         ('vect', text.CountVectorizer()),
         ('tfidf', text.TfidfTransformer()),
-        ('clf', linear_model.SGDClassifier())
+        ('clf', classifier)
     ])
 
     search = None
-    if gridsearch is not None:
+    if gridsearch is not None and classifier_name == "SGD":
         if verbose:
             print("Performing grid search with a linear SGD classifier.")
 
@@ -89,7 +125,7 @@ def train(data_filepath, outpath, gridsearch=None, verbose=False):
         model = search.best_estimator_
     else:
         if verbose:
-            print("Training a linear SGD classifier with default hyperparameters.")
+            print("Training a %s classifier with default hyperparameters." % classifier_name)
         model = pipeline.fit(train["mail"], train["spam"])
 
     joblib.dump(model, outpath)
@@ -118,7 +154,8 @@ if __name__ == "__main__":
     parser = make_argparser()
     args = parser.parse_args()
 
-    search, model = train(args.dataset, args.outpath, args.gridsearch, args.verbose)
+    search, model = train(
+        args.dataset, args.outpath, args.classifier, args.gridsearch, args.verbose)
 
     if args.verbose and search is not None:
         print("Search Accuracy:", search.best_score_)
