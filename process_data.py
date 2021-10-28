@@ -19,6 +19,7 @@ import re
 import typing
 
 from sklearn import model_selection
+from sklearn.base import BaseEstimator, TransformerMixin
 
 punctuation_exp = re.compile(r"[\!()\-[\]{};:'\"\\,<>./?@#$%^&*_~]")
 url_exp = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
@@ -34,6 +35,13 @@ def load_files(labeled_paths : LabeledPaths) -> LabeledFiles:
     for (filepath, spam) in labeled_paths:
         with open(filepath, encoding="iso-8859-1") as f:
             yield (os.path.dirname(filepath), f.read(), spam)
+
+def extract_payload(msg : email.message.Message):
+    processed_content = msg.get_payload()
+    if isinstance(processed_content, str):
+        return processed_content
+    else:
+        return "\n".join([extract_payload(submsg) for submsg in processed_content])
 
 def process_file(
     content : str,
@@ -68,8 +76,8 @@ def process_file(
     processed_content = content
     if strip_header:
         msg = email.message_from_string(content)
-        processed_content = msg.get_payload()
-    
+        processed_content = extract_payload(msg)
+
     if lowercase:
         processed_content = processed_content.lower()
 
@@ -89,6 +97,36 @@ def process_file(
         processed_content = " ".join([stemmer.stem(token) for token in tokens])
 
     return processed_content
+
+class DataTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self,
+        strip_header=False,
+        lowercase=False,
+        remove_punctuation=False,
+        replace_urls=False,
+        replace_numbers=False,
+        stem=False
+    ):
+        self.strip_header = strip_header
+        self.lowercase = lowercase
+        self.remove_punctuation = remove_punctuation
+        self.replace_urls = replace_urls
+        self.replace_numbers = replace_numbers
+        self.stem = stem
+    
+    def fit(self, X, y = None):
+        return self
+
+    def transform(self, X, y=None):
+        return X.map(lambda content: process_file(
+            content,
+            self.strip_header,
+            self.lowercase,
+            self.remove_punctuation,
+            self.replace_urls,
+            self.replace_numbers,
+            self.stem
+        ))
 
 def make_dataset(labeled_files : LabeledFiles) -> pd.DataFrame:
     paths, features, labels = zip(*labeled_files)

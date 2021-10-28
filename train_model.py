@@ -6,21 +6,21 @@
 
 # TODO: add text preprocessing to the pipeline
 # TODO: use stratified k-fold for the grid search
-# TODO: grid searcg for all classifiers
+# TODO: grid search for all classifiers
 # TODO: replace verbose + print with logging library
 # TODO: add training time measurement to the metrics
+# TODO: automatically try out all classifiers and choose the best one
+# TODO: try sklearn.metrics.classification_report
 
 import argparse
 import pandas as pd
 import joblib
+import process_data
 
-from sklearn import discriminant_analysis
 from sklearn import ensemble
-from sklearn import gaussian_process
 from sklearn import linear_model
 from sklearn import metrics
 from sklearn import model_selection
-from sklearn import naive_bayes
 from sklearn import neighbors
 from sklearn import neural_network
 from sklearn import pipeline as pl
@@ -30,18 +30,11 @@ from sklearn.feature_extraction import text
 
 classifiers = {
     "AdaBoost": ensemble.AdaBoostClassifier(),
-    "Decision Tree": tree.DecisionTreeClassifier(max_depth=5),
-    # TypeError: A sparse matrix was passed, but dense data is required. Use X.toarray() to convert to a dense numpy array.
-    # "Gaussian Process": gaussian_process.GaussianProcessClassifier(1.0 * gaussian_process.kernels.RBF(1.0)),
+    "Decision Tree": tree.DecisionTreeClassifier(),
     "Linear SVM": svm.SVC(kernel="linear", C=0.025),
-    # TypeError: A sparse matrix was passed, but dense data is required. Use X.toarray() to convert to a dense numpy array.
-    # "Naive Bayes": naive_bayes.GaussianNB(),
     "Nearest Neighbors": neighbors.KNeighborsClassifier(3),
     "Neural Net": neural_network.MLPClassifier(alpha=1, max_iter=1000),
-    # TypeError: A sparse matrix was passed, but dense data is required. Use X.toarray() to convert to a dense numpy array.
-    # "QDA": discriminant_analysis.QuadraticDiscriminantAnalysis(),
-    # UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 due to no predicted samples. Use `zero_division` parameter to control this behavior.
-    # "Random Forest": ensemble.RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+    "Random Forest": ensemble.RandomForestClassifier(),  # third best one
     "RBF SVM": svm.SVC(gamma=2, C=1),  # best one so far
     "SGD": linear_model.SGDClassifier()  # second best one
 }
@@ -96,6 +89,7 @@ def train(data_filepath, outpath, classifier_name="SGD", gridsearch=None, verbos
     train = pd.read_hdf(data_filepath, key="train")
 
     pipeline = pl.Pipeline([
+        ('process', process_data.DataTransformer()),
         ('vect', text.CountVectorizer()),
         ('tfidf', text.TfidfTransformer()),
         ('clf', classifier)
