@@ -1,21 +1,13 @@
-# * import dataset from hdf5 file
-# * apply pipeline with CountVectorizer, TfidTransformer and some classifier
-# * hyperparameter to choose the classifier
-# * perform grid search on all the hyperparameters
-# * serialize the trained model to a file (use joblib)
-
-# TODO: add text preprocessing to the pipeline
 # TODO: use stratified k-fold for the grid search
 # TODO: grid search for all classifiers
 # TODO: replace verbose + print with logging library
-# TODO: add training time measurement to the metrics
 # TODO: automatically try out all classifiers and choose the best one
-# TODO: try sklearn.metrics.classification_report
 
 import argparse
 import pandas as pd
 import joblib
 import process_data
+import utils
 
 from sklearn import ensemble
 from sklearn import linear_model
@@ -84,9 +76,8 @@ def make_argparser() -> argparse.ArgumentParser:
 
     return parser
 
-def train(data_filepath, outpath, classifier_name="SGD", gridsearch=None, verbose=False):
+def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
     classifier = classifiers.get(classifier_name, "SGD")
-    train = pd.read_hdf(data_filepath, key="train")
 
     pipeline = pl.Pipeline([
         ('process', process_data.DataTransformer()),
@@ -96,72 +87,88 @@ def train(data_filepath, outpath, classifier_name="SGD", gridsearch=None, verbos
     ])
 
     search = None
-    if gridsearch is not None and classifier_name == "SGD":
-        if verbose:
-            print("Performing grid search with a linear SGD classifier.")
+    # if gridsearch is not None and classifier_name == "SGD":
+    #     if verbose:
+    #         print("Performing grid search with a linear SGD classifier.")
 
-        parameters = {
-            'vect__max_df': (0.5, 0.75, 1.0),
-            # 'vect__max_features': (None, 5000, 10000, 50000),
-            'vect__ngram_range': ((1, 1), (1, 2)),  # unigrams or bigrams
-            # 'tfidf__use_idf': (True, False),
-            # 'tfidf__norm': ('l1', 'l2'),
-            'clf__max_iter': (20,),
-            'clf__alpha': (0.00001, 0.000001),
-            'clf__penalty': ('l2', 'elasticnet'),
-            # 'clf__max_iter': (10, 50, 80),
-        }
+    #     parameters = {
+    #         'vect__max_df': (0.5, 0.75, 1.0),
+    #         # 'vect__max_features': (None, 5000, 10000, 50000),
+    #         'vect__ngram_range': ((1, 1), (1, 2)),  # unigrams or bigrams
+    #         # 'tfidf__use_idf': (True, False),
+    #         # 'tfidf__norm': ('l1', 'l2'),
+    #         'clf__max_iter': (20,),
+    #         'clf__alpha': (0.00001, 0.000001),
+    #         'clf__penalty': ('l2', 'elasticnet'),
+    #         # 'clf__max_iter': (10, 50, 80),
+    #     }
 
-        search = model_selection.RandomizedSearchCV(
-            pipeline, parameters, n_iter=gridsearch, verbose=1, scoring="f1")
+    #     search = model_selection.RandomizedSearchCV(
+    #         pipeline, parameters, n_iter=gridsearch, verbose=1, scoring="f1")
 
-        search.fit(train["mail"], train["spam"])
-        model = search.best_estimator_
-    else:
-        if verbose:
-            print("Training a %s classifier with default hyperparameters." % classifier_name)
-        model = pipeline.fit(train["mail"], train["spam"])
+    #     search.fit(train["mail"], train["spam"])
+    #     model = search.best_estimator_
+    with utils.Timer() as t:
+        if gridsearch is not None:
+            if verbose:
+                print(
+                    "Performing grid search for the preprocessing step "
+                    "with a %s classifier." % classifier_name
+                )
 
-    joblib.dump(model, outpath)
+            parameters = {
+                'process__strip_header': (True, False),
+                'process__lowercase': (True, False),
+                'process__remove_punctuation': (True, False),
+                'process__replace_urls': (True, False),
+                'process__replace_numbers': (True, False),
+            }
+
+            search = model_selection.RandomizedSearchCV(
+                pipeline, parameters, n_iter=gridsearch, verbose=1, scoring="f1")
+
+            search.fit(data["mail"], data["spam"])
+            model = search.best_estimator_
+        else:
+            if verbose:
+                print("Training a %s classifier with default hyperparameters." % classifier_name)
+            model = pipeline.fit(data["mail"], data["spam"])
+
+    if verbose:
+        print('Training time: {:.2f}s'.format(t.elapsed))
 
     return search, model
 
-def compute_metrics(data_filepath, model):
+def show_metrics(data_filepath, model):
     test = pd.read_hdf(data_filepath, key="test")
 
     targets = test["spam"]
     predictions = model.predict(test["mail"])
-
     confusion = metrics.confusion_matrix(targets, predictions)
-    precision = metrics.precision_score(targets, predictions)
-    recall = metrics.recall_score(targets, predictions)
-    f1 = metrics.f1_score(targets, predictions)
+    report = metrics.classification_report(targets, predictions)
 
-    return {
-        "confusion_matrix": confusion,
-        "precision": precision,
-        "recall": recall,
-        "f1": f1,
-    }
+    return (
+        "Metrics computed on the test set\n"
+        "{report}\n"
+        "Confusion matrix:\n{confusion}\n"
+    ).format(
+        report = report,
+        confusion = "\t{0}\t{1}\n\t{2}\t{3}".format(
+            confusion[0, 0], confusion[0, 1], confusion[1, 0], confusion[1, 1])
+    )
 
 if __name__ == "__main__":
     parser = make_argparser()
     args = parser.parse_args()
 
-    search, model = train(
-        args.dataset, args.outpath, args.classifier, args.gridsearch, args.verbose)
+    train_data = pd.read_hdf(args.dataset, key="train")
+    search, model = train(train_data, args.classifier, args.gridsearch, args.verbose)
+
+    joblib.dump(model, args.outpath)
 
     if args.verbose and search is not None:
         print("Search Accuracy:", search.best_score_)
         print("Best parameters:", search.best_params_)
 
     if args.metrics:
-        values = compute_metrics(args.dataset, model)
-        cm = values["confusion_matrix"]
-
-        print("Metrics computed on the test set")
-        print("confusion matrix:\n\t{0}\t{1}\n\t{2}\t{3}"
-            .format(cm[0, 0], cm[0, 1], cm[1, 0], cm[1, 1]))
-        print("precision:", values["precision"])
-        print("recall:", values["recall"])
-        print("f1 score:", values["f1"])
+        print(show_metrics(args.dataset, model))
