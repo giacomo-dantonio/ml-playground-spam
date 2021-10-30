@@ -1,13 +1,12 @@
-# TODO: use stratified k-fold for the grid search
 # TODO: grid search for all classifiers
 # TODO: replace verbose + print with logging library
-# TODO: automatically try out all classifiers and choose the best one
 
 import argparse
 import pandas as pd
 import joblib
 import process_data
 import utils
+import json
 
 from sklearn import ensemble
 from sklearn import linear_model
@@ -30,6 +29,22 @@ classifiers = {
     "RBF SVM": svm.SVC(gamma=2, C=1),  # best one so far
     "SGD": linear_model.SGDClassifier()  # second best one
 }
+
+def get_search_parameters(classifier_name):
+    if classifier_name == "Decision Tree":
+        return {
+            "clf__criterion": ("gini", "entropy"),
+            "clf__splitter": ("best", "random"),
+        }
+    elif classifier_name == "SGD":
+        return {
+            "clf__max_iter": (20,),
+            "clf__alpha": (0.00001, 0.000001),
+            "clf__penalty": ("l2", "elasticnet"),
+            # "clf__max_iter": (10, 50, 80),
+        }
+    else:
+        return {}
 
 def make_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -80,34 +95,13 @@ def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
     classifier = classifiers.get(classifier_name, "SGD")
 
     pipeline = pl.Pipeline([
-        ('process', process_data.DataTransformer()),
-        ('vect', text.CountVectorizer()),
-        ('tfidf', text.TfidfTransformer()),
-        ('clf', classifier)
+        ("process", process_data.DataTransformer()),
+        ("vect", text.CountVectorizer()),
+        ("tfidf", text.TfidfTransformer()),
+        ("clf", classifier)
     ])
 
     search = None
-    # if gridsearch is not None and classifier_name == "SGD":
-    #     if verbose:
-    #         print("Performing grid search with a linear SGD classifier.")
-
-    #     parameters = {
-    #         'vect__max_df': (0.5, 0.75, 1.0),
-    #         # 'vect__max_features': (None, 5000, 10000, 50000),
-    #         'vect__ngram_range': ((1, 1), (1, 2)),  # unigrams or bigrams
-    #         # 'tfidf__use_idf': (True, False),
-    #         # 'tfidf__norm': ('l1', 'l2'),
-    #         'clf__max_iter': (20,),
-    #         'clf__alpha': (0.00001, 0.000001),
-    #         'clf__penalty': ('l2', 'elasticnet'),
-    #         # 'clf__max_iter': (10, 50, 80),
-    #     }
-
-    #     search = model_selection.RandomizedSearchCV(
-    #         pipeline, parameters, n_iter=gridsearch, verbose=1, scoring="f1")
-
-    #     search.fit(train["mail"], train["spam"])
-    #     model = search.best_estimator_
     with utils.Timer() as t:
         if gridsearch is not None:
             if verbose:
@@ -117,17 +111,27 @@ def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
                 )
 
             parameters = {
-                'process__strip_header': (True, False),
-                'process__lowercase': (True, False),
-                'process__remove_punctuation': (True, False),
-                'process__replace_urls': (True, False),
-                'process__replace_numbers': (True, False),
+                "vect__max_df": (0.5, 0.75, 1.0),
+                # "vect__max_features": (None, 5000, 10000, 50000),
+                "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
+                # "tfidf__use_idf": (True, False),
+                # "tfidf__norm": ("l1", "l2"),
+                "process__strip_header": (True, False),
+                "process__lowercase": (True, False),
+                "process__remove_punctuation": (True, False),
+                "process__replace_urls": (True, False),
+                "process__replace_numbers": (True, False),
             }
+            parameters.update(get_search_parameters(classifier_name))
 
             search = model_selection.RandomizedSearchCV(
-                pipeline, parameters, n_iter=gridsearch, verbose=1, scoring="f1")
+                pipeline, parameters,
+                n_iter=gridsearch,
+                verbose=1,
+                scoring="f1",
+                cv=model_selection.GroupKFold())
 
-            search.fit(data["mail"], data["spam"])
+            search.fit(data["mail"], data["spam"], groups=data["dirpath"])
             model = search.best_estimator_
         else:
             if verbose:
@@ -135,7 +139,7 @@ def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
             model = pipeline.fit(data["mail"], data["spam"])
 
     if verbose:
-        print('Training time: {:.2f}s'.format(t.elapsed))
+        print("Training time: {:.2f}s".format(t.elapsed))
 
     return search, model
 
@@ -168,7 +172,7 @@ if __name__ == "__main__":
 
     if args.verbose and search is not None:
         print("Search Accuracy:", search.best_score_)
-        print("Best parameters:", search.best_params_)
+        print("Best parameters:\n", json.dumps(search.best_params_, indent=2))
 
     if args.metrics:
         print(show_metrics(args.dataset, model))

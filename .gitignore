@@ -1,3 +1,8 @@
 __pycache__
+
+# python virtual environment
+.venv
+
+# training data and trained model
 data.h5
 model.pkl

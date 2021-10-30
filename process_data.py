@@ -1,15 +1,3 @@
-# * load files and assign labels to them, according to their filepath
-# * depending on the hyperparameters process the file content
-#     - strip off headers
-#     - convert to lowercase
-#     - remove puntuaction
-#     - replace all URLs with "URL"
-#     - replace all numbers with "NUMBER"
-#     - perform stemming (trim off word endings)
-# * make an ordered set of all words
-# * convert data to sparse vectors
-# * split training and test set
-
 import argparse
 import email
 import nltk
