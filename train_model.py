@@ -1,12 +1,14 @@
 # TODO: grid search for all classifiers
-# TODO: replace verbose + print with logging library
+# TODO: write model name and hyperparameters after gs to a json file
+# TODO: read model name and hyperparameters from a json file
 
 import argparse
-import pandas as pd
 import joblib
+import json
+import logging
+import pandas as pd
 import process_data
 import utils
-import json
 
 from sklearn import ensemble
 from sklearn import linear_model
@@ -19,6 +21,8 @@ from sklearn import svm
 from sklearn import tree
 from sklearn.feature_extraction import text
 
+logger = logging.getLogger(__name__)
+
 classifiers = {
     "AdaBoost": ensemble.AdaBoostClassifier(),
     "Decision Tree": tree.DecisionTreeClassifier(),
@@ -27,7 +31,7 @@ classifiers = {
     "Neural Net": neural_network.MLPClassifier(alpha=1, max_iter=1000),
     "Random Forest": ensemble.RandomForestClassifier(),  # third best one
     "RBF SVM": svm.SVC(gamma=2, C=1),  # best one so far
-    "SGD": linear_model.SGDClassifier()  # second best one
+    "SGD": linear_model.SGDClassifier(),  # second best one
 }
 
 def get_search_parameters(classifier_name):
@@ -91,11 +95,11 @@ def make_argparser() -> argparse.ArgumentParser:
 
     return parser
 
-def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
+def train(data, classifier_name="SGD", gridsearch=None):
     classifier = classifiers.get(classifier_name)
 
     if classifier is None:
-        # FIXME: warning
+        logger.warning("Unknown classifier %s, using SGD instead.", classifier_name)
         classifier_name = "SGD"
         classifier = classifiers.get(classifier_name)
 
@@ -109,11 +113,10 @@ def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
     search = None
     with utils.Timer() as t:
         if gridsearch is not None:
-            if verbose:
-                print(
-                    "Performing grid search for the preprocessing step "
-                    "with a %s classifier." % classifier_name
-                )
+            logger.info(
+                "Performing grid search for the preprocessing step "
+                "with a %s classifier." % classifier_name
+            )
 
             parameters = {
                 "vect__max_df": (0.5, 0.75, 1.0),
@@ -139,12 +142,10 @@ def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
             search.fit(data["mail"], data["spam"], groups=data["dirpath"])
             model = search.best_estimator_
         else:
-            if verbose:
-                print("Training a %s classifier with default hyperparameters." % classifier_name)
+            logger.info("Training a %s classifier with default hyperparameters." % classifier_name)
             model = pipeline.fit(data["mail"], data["spam"])
 
-    if verbose:
-        print("Training time: {:.2f}s".format(t.elapsed))
+    logger.info("Training time: {:.2f}s".format(t.elapsed))
 
     return search, model
 
@@ -170,14 +171,19 @@ if __name__ == "__main__":
     parser = make_argparser()
     args = parser.parse_args()
 
+    logging.basicConfig(
+        format='%(levelname)s\t%(message)s',
+        level=logging.INFO if args.verbose else logging.WARNING
+    )
+
     train_data = pd.read_hdf(args.dataset, key="train")
-    search, model = train(train_data, args.classifier, args.gridsearch, args.verbose)
+    search, model = train(train_data, args.classifier, args.gridsearch)
 
     joblib.dump(model, args.outpath)
 
-    if args.verbose and search is not None:
-        print("Search Accuracy:", search.best_score_)
-        print("Best parameters:\n", json.dumps(search.best_params_, indent=2))
+    if search is not None:
+        logger.info("Search Accuracy:", search.best_score_)
+        logger.info("Best parameters:\n", json.dumps(search.best_params_, indent=2))
 
     if args.metrics:
-        print(show_metrics(args.dataset, model))
+        logger.info(show_metrics(args.dataset, model))
