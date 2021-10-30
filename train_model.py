@@ -38,10 +38,10 @@ def get_search_parameters(classifier_name):
         }
     elif classifier_name == "SGD":
         return {
-            "clf__max_iter": (20,),
-            "clf__alpha": (0.00001, 0.000001),
+            "clf__max_iter": (20, 1000),
+            "clf__alpha": (1E-4, 1E-5, 1E-6),
             "clf__penalty": ("l2", "elasticnet"),
-            # "clf__max_iter": (10, 50, 80),
+            "clf__max_iter": (10, 100, 1000),
         }
     else:
         return {}
@@ -92,7 +92,12 @@ def make_argparser() -> argparse.ArgumentParser:
     return parser
 
 def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
-    classifier = classifiers.get(classifier_name, "SGD")
+    classifier = classifiers.get(classifier_name)
+
+    if classifier is None:
+        # FIXME: warning
+        classifier_name = "SGD"
+        classifier = classifiers.get(classifier_name)
 
     pipeline = pl.Pipeline([
         ("process", process_data.DataTransformer()),
@@ -112,10 +117,10 @@ def train(data, classifier_name="SGD", gridsearch=None, verbose=False):
 
             parameters = {
                 "vect__max_df": (0.5, 0.75, 1.0),
-                # "vect__max_features": (None, 5000, 10000, 50000),
+                "vect__max_features": (None, 5000, 10000, 50000),
                 "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
-                # "tfidf__use_idf": (True, False),
-                # "tfidf__norm": ("l1", "l2"),
+                "tfidf__use_idf": (True, False),
+                "tfidf__norm": ("l1", "l2"),
                 "process__strip_header": (True, False),
                 "process__lowercase": (True, False),
                 "process__remove_punctuation": (True, False),
