@@ -75,7 +75,7 @@ def make_argparser() -> argparse.ArgumentParser:
         "-v",
         "---verbose",
         action="store_true",
-        help="Display information about the grid search for hyperparameters tuning."
+        help="Display information about the trained model on stdout."
     )
 
     parser.add_argument(

@@ -2,10 +2,10 @@
 
 ## AdaBoost
 
-    (.venv) giacomo@sisyphos:~/ml/ml-playground-spam$ python -m train_model -d ./data.h5 -m -v -c "AdaBoost"
-    Training a AdaBoost classifier with default hyperparameters.
-    Training time: 17.00s
-    Metrics computed on the test set
+    $ python -m train_model -d ./data.h5 -m -v -c "AdaBoost"
+    INFO  Training a AdaBoost classifier with default hyperparameters.
+    INFO  Training time: 16.95s
+    INFO  Metrics computed on the test set
                   precision    recall  f1-score   support
 
            False       0.99      0.99      0.99      1390
@@ -21,29 +21,29 @@
 
 ## Decision Tree
 
-    (.venv) giacomo@sisyphos:~/ml/ml-playground-spam$ python -m train_model -d ./data.h5 -m -v -c "Decision Tree"
-    Training a Decision Tree classifier with default hyperparameters.
-    Training time: 8.83s
-    Metrics computed on the test set
+    $ python -m train_model -d ./data.h5 -m -v -c "Decision Tree"
+    INFO  Training a Decision Tree classifier with default hyperparameters.
+    INFO  Training time: 8.81s
+    INFO  Metrics computed on the test set
                   precision    recall  f1-score   support
 
-           False       0.98      0.99      0.98      1390
-            True       0.96      0.94      0.95       480
+           False       0.97      0.99      0.98      1390
+            True       0.97      0.93      0.95       480
 
         accuracy                           0.97      1870
        macro avg       0.97      0.96      0.96      1870
     weighted avg       0.97      0.97      0.97      1870
 
     Confusion matrix:
-      1371  19
-      31    449
+      1375  15
+      36    444
 
 ## Linear SVM
 
-    (.venv) giacomo@sisyphos:~/ml/ml-playground-spam$ python -m train_model -d ./data.h5 -m -v -c "Linear SVM"
-    Training a Linear SVM classifier with default hyperparameters.
-    Training time: 49.54s
-    Metrics computed on the test set
+    $ python -m train_model -d ./data.h5 -m -v -c "Linear SVM"
+    INFO  Training a Linear SVM classifier with default hyperparameters.
+    INFO  Training time: 50.44s
+    INFO  Metrics computed on the test set
                   precision    recall  f1-score   support
 
            False       0.91      0.98      0.94      1390
@@ -59,10 +59,10 @@
 
 ## Nearest Neighbors
 
-    (.venv) giacomo@sisyphos:~/ml/ml-playground-spam$ python -m train_model -d ./data.h5 -m -v -c "Nearest Neighbors"
-    Training a Nearest Neighbors classifier with default hyperparameters.
-    Training time: 3.60s
-    Metrics computed on the test set
+    $ python -m train_model -d ./data.h5 -m -v -c "Nearest Neighbors"
+    INFO  Training a Nearest Neighbors classifier with default hyperparameters.
+    INFO  Training time: 3.56s
+    INFO  Metrics computed on the test set
                   precision    recall  f1-score   support
 
            False       0.98      0.99      0.98      1390
@@ -76,31 +76,50 @@
       1375  15
       34    446
 
+## Neural Net
+
+    $ python -m train_model -d ./data.h5 -m -v -c "Neural Net"
+    INFO  Training a Neural Net classifier with default hyperparameters.
+    INFO  Training time: 839.60s
+    INFO  Metrics computed on the test set
+                  precision    recall  f1-score   support
+
+           False       0.98      0.99      0.99      1390
+            True       0.97      0.95      0.96       480
+
+        accuracy                           0.98      1870
+       macro avg       0.97      0.97      0.97      1870
+    weighted avg       0.98      0.98      0.98      1870
+
+    Confusion matrix:
+      1374  16
+      24    456
+
 ## Random Forest
 
-    (.venv) giacomo@sisyphos:~/ml/ml-playground-spam$ python -m train_model -d ./data.h5 -m -v -c "Random Forest"
-    Training a Random Forest classifier with default hyperparameters.
-    Training time: 6.73s
-    Metrics computed on the test set
+    $ python -m train_model -d ./data.h5 -m -v -c "Random Forest"
+    INFO  Training a Random Forest classifier with default hyperparameters.
+    INFO  Training time: 7.13s
+    INFO  Metrics computed on the test set
                   precision    recall  f1-score   support
 
            False       0.99      0.99      0.99      1390
-            True       0.99      0.97      0.98       480
+            True       0.98      0.97      0.97       480
 
         accuracy                           0.99      1870
        macro avg       0.99      0.98      0.98      1870
     weighted avg       0.99      0.99      0.99      1870
 
     Confusion matrix:
-      1383  7
+      1382  8
       16    464
 
 ## RBF SVM
 
-    (.venv) giacomo@sisyphos:~/ml/ml-playground-spam$ python -m train_model -d ./data.h5 -m -v -c "RBF SVM"
-    Training a RBF SVM classifier with default hyperparameters.
-    Training time: 47.31s
-    Metrics computed on the test set
+    $ python -m train_model -d ./data.h5 -m -v -c "RBF SVM"
+    INFO  Training a RBF SVM classifier with default hyperparameters.
+    INFO  Training time: 48.45s
+    INFO  Metrics computed on the test set
                   precision    recall  f1-score   support
 
            False       0.99      0.99      0.99      1390
@@ -116,13 +135,13 @@
 
 ## SGD
 
-    (.venv) giacomo@sisyphos:~/ml/ml-playground-spam$ python -m train_model -d ./data.h5 -m -v -c "SGD"
-    Training a SGD classifier with default hyperparameters.
-    Training time: 3.75s
-    Metrics computed on the test set
+    $ python -m train_model -d ./data.h5 -m -v -c "SGD"
+    INFO  Training a SGD classifier with default hyperparameters.
+    INFO  Training time: 3.69s
+    INFO  Metrics computed on the test set
                   precision    recall  f1-score   support
 
-           False       1.00      0.99      1.00      1390
+           False       0.99      1.00      1.00      1390
             True       0.99      0.99      0.99       480
 
         accuracy                           0.99      1870
@@ -130,17 +149,17 @@
     weighted avg       0.99      0.99      0.99      1870
 
     Confusion matrix:
-      1383  7
-      6     474
+      1385  5
+      7     473
 
 ### Grid search
 
-    (.venv) giacomo@sisyphos:~/ml/ml-playground-spam$ python -m train_model -d ./data.h5 -m -v -c SGD -g 50
-    Performing grid search for the preprocessing step with a SGD classifier.
+    $ python -m train_model -d ./data.h5 -m -v -c SGD -g 50
+    INFO  Performing grid search for the preprocessing step with a SGD classifier.
     Fitting 5 folds for each of 50 candidates, totalling 250 fits
-    Training time: 1631.98s
-    Search Accuracy: 0.386381615408105
-    Best parameters:
+    INFO  Training time: 1631.98s
+    INFO  Search Accuracy: 0.386381615408105
+    INFO  Best parameters:
     {
       "vect__ngram_range": [
         1,
@@ -159,7 +178,7 @@
       "clf__max_iter": 100,
       "clf__alpha": 1e-06
     }
-    Metrics computed on the test set
+    INFO  Metrics computed on the test set
                   precision    recall  f1-score   support
 
            False       0.99      1.00      0.99      1390
