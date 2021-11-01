@@ -1,3 +1,15 @@
+"""
+Train a model for spam classification using pandas dataframe as input.
+The dataframe should have the following format.
+
+    Data columns (total 3 columns):
+    #   Column   Non-Null Count  Dtype 
+    ---  ------   --------------  ----- 
+    0   dirpath  7478 non-null   object
+    1   mail     7478 non-null   object
+    2   spam     7478 non-null   bool  
+"""
+
 # TODO: grid search for all classifiers
 # TODO: write model name and hyperparameters after gs to a json file
 # TODO: read model name and hyperparameters from a json file
@@ -7,6 +19,7 @@ import joblib
 import json
 import logging
 import pandas as pd
+import sklearn
 import process_data
 import utils
 
@@ -21,9 +34,9 @@ from sklearn import svm
 from sklearn import tree
 from sklearn.feature_extraction import text
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
-classifiers = {
+_classifiers = {
     "AdaBoost": ensemble.AdaBoostClassifier(),
     "Decision Tree": tree.DecisionTreeClassifier(),
     "Linear SVM": svm.SVC(kernel="linear", C=0.025),
@@ -34,7 +47,11 @@ classifiers = {
     "SGD": linear_model.SGDClassifier(),  # second best one
 }
 
-def get_search_parameters(classifier_name):
+def _get_search_parameters(classifier_name):
+    """
+    Gets the hyperparameters for the grid search, which are specific to the classifier.
+    These are combined with those of the other pipeline steps in the train function.
+    """
     if classifier_name == "Decision Tree":
         return {
             "clf__criterion": ("gini", "entropy"),
@@ -50,7 +67,8 @@ def get_search_parameters(classifier_name):
     else:
         return {}
 
-def make_argparser() -> argparse.ArgumentParser:
+def _make_argparser() -> argparse.ArgumentParser:
+    """Construct the parser for the CLI arguments."""
     parser = argparse.ArgumentParser(
         description="Train a model from an HDF5 dataset and export it to a file.")
 
@@ -90,18 +108,40 @@ def make_argparser() -> argparse.ArgumentParser:
         "--classifier",
         default="SGD",
         help="Choose the classifier used for the optimization. "
-             "The following values are allowed: %s." % ", ".join(classifiers.keys())
+             "The following values are allowed: %s." % ", ".join(_classifiers.keys())
     )
 
     return parser
 
-def train(data, classifier_name="SGD", gridsearch=None):
-    classifier = classifiers.get(classifier_name)
+def train(data: pd.DataFrame, classifier_name: str ="SGD", gridsearch: int =None):
+    """
+    Train a model for spam classification.
+
+    Arguments:
+
+    data            The dataframe used for training the model. It should have
+                    the format described above.
+
+    classifier_name The name of the classifier used for building the model.
+                    The following classifiers are supported:
+                    AdaBoost, Decision Tree, Linear SVM, Nearest Neighbors,
+                    Neural Net, Random, Forest, RBF SVM, SGD.
+
+    gridsearch      The number of iterations for the randomized grid search.
+                    If you input None, the search will be skipped and the model
+                    will be trained using the default hyperparameters
+                    of the classifier.
+
+    Returns:
+        a tuple (search, model) containg the grid search object
+        from scikit learn and the trained model.
+    """
+    classifier = _classifiers.get(classifier_name)
 
     if classifier is None:
-        logger.warning("Unknown classifier %s, using SGD instead.", classifier_name)
+        _logger.warning("Unknown classifier %s, using SGD instead.", classifier_name)
         classifier_name = "SGD"
-        classifier = classifiers.get(classifier_name)
+        classifier = _classifiers.get(classifier_name)
 
     pipeline = pl.Pipeline([
         ("process", process_data.DataTransformer()),
@@ -113,7 +153,7 @@ def train(data, classifier_name="SGD", gridsearch=None):
     search = None
     with utils.Timer() as t:
         if gridsearch is not None:
-            logger.info(
+            _logger.info(
                 "Performing grid search for the preprocessing step "
                 "with a %s classifier." % classifier_name
             )
@@ -130,7 +170,7 @@ def train(data, classifier_name="SGD", gridsearch=None):
                 "process__replace_urls": (True, False),
                 "process__replace_numbers": (True, False),
             }
-            parameters.update(get_search_parameters(classifier_name))
+            parameters.update(_get_search_parameters(classifier_name))
 
             search = model_selection.RandomizedSearchCV(
                 pipeline, parameters,
@@ -142,14 +182,18 @@ def train(data, classifier_name="SGD", gridsearch=None):
             search.fit(data["mail"], data["spam"], groups=data["dirpath"])
             model = search.best_estimator_
         else:
-            logger.info("Training a %s classifier with default hyperparameters." % classifier_name)
+            _logger.info("Training a %s classifier with default hyperparameters." % classifier_name)
             model = pipeline.fit(data["mail"], data["spam"])
 
-    logger.info("Training time: {:.2f}s".format(t.elapsed))
+    _logger.info("Training time: {:.2f}s".format(t.elapsed))
 
     return search, model
 
-def show_metrics(data_filepath, model):
+def _show_metrics(data_filepath, model):
+    """
+    Computes the classification metrics for the trained model,
+    by applying it to the test set.
+    """
     test = pd.read_hdf(data_filepath, key="test")
 
     targets = test["spam"]
@@ -168,7 +212,7 @@ def show_metrics(data_filepath, model):
     )
 
 if __name__ == "__main__":
-    parser = make_argparser()
+    parser = _make_argparser()
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -182,8 +226,8 @@ if __name__ == "__main__":
     joblib.dump(model, args.outpath)
 
     if search is not None:
-        logger.info("Search Accuracy:", search.best_score_)
-        logger.info("Best parameters:\n", json.dumps(search.best_params_, indent=2))
+        _logger.info("Search Accuracy:", search.best_score_)
+        _logger.info("Best parameters:\n", json.dumps(search.best_params_, indent=2))
 
     if args.metrics:
-        logger.info(show_metrics(args.dataset, model))
+        _logger.info(_show_metrics(args.dataset, model))
