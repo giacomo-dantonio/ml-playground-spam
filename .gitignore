@@ -6,3 +6,4 @@ __pycache__
 # training data and trained model
 data.h5
 model.pkl
+data
