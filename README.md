@@ -1,7 +1,7 @@
 # Spam classifier
 
 This is the solution of Exercise 4 of Chapter 3 of the book
-*Hands-On Machine Learning with Scikir-Learn, Keras & Tensorflow*.
+*Hands-On Machine Learning with Scikit-Learn, Keras & Tensorflow*.
 
 It is a spam classifier which can be trained using various models.
 
