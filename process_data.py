@@ -1,3 +1,9 @@
+"""
+Reads emails from some folders and prepare the train and test datasets
+for the `train_model` module. The folders are also used to assign labels
+(i.e. the files in a folder are either all spam or all ham).
+"""
+
 import argparse
 import email
 import nltk
@@ -9,14 +15,14 @@ import typing
 from sklearn import model_selection
 from sklearn.base import BaseEstimator, TransformerMixin
 
-punctuation_exp = re.compile(r"[\!()\-[\]{};:'\"\\,<>./?@#$%^&*_~]")
-url_exp = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
-number_exp = re.compile(r"(?:\d{3}[\.,])?\d+(?:[\.,]\d+)?")
+_punctuation_exp = re.compile(r"[\!()\-[\]{};:'\"\\,<>./?@#$%^&*_~]")
+_url_exp = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
+_number_exp = re.compile(r"(?:\d{3}[\.,])?\d+(?:[\.,]\d+)?")
 
 LabeledPaths = typing.List[typing.Tuple[str, bool]]
 LabeledFiles = typing.Generator[typing.Tuple[str, str, bool], None, None]
 
-def load_files(labeled_paths : LabeledPaths) -> LabeledFiles:
+def _load_files(labeled_paths : LabeledPaths) -> LabeledFiles:
     """
     Load file contents and assign labels to them.
     """
@@ -24,12 +30,12 @@ def load_files(labeled_paths : LabeledPaths) -> LabeledFiles:
         with open(filepath, encoding="iso-8859-1") as f:
             yield (os.path.dirname(filepath), f.read(), spam)
 
-def extract_payload(msg : email.message.Message):
+def _extract_payload(msg : email.message.Message):
     processed_content = msg.get_payload()
     if isinstance(processed_content, str):
         return processed_content
     else:
-        return "\n".join([extract_payload(submsg) for submsg in processed_content])
+        return "\n".join([_extract_payload(submsg) for submsg in processed_content])
 
 def process_file(
     content : str,
@@ -64,19 +70,19 @@ def process_file(
     processed_content = content
     if strip_header:
         msg = email.message_from_string(content)
-        processed_content = extract_payload(msg)
+        processed_content = _extract_payload(msg)
 
     if lowercase:
         processed_content = processed_content.lower()
 
     if replace_urls:
-        processed_content = url_exp.sub("URL", processed_content)
+        processed_content = _url_exp.sub("URL", processed_content)
 
     if remove_punctuation:
-        processed_content = punctuation_exp.sub("", processed_content)
+        processed_content = _punctuation_exp.sub("", processed_content)
 
     if replace_numbers:
-        processed_content = number_exp.sub("NUMBER", processed_content)
+        processed_content = _number_exp.sub("NUMBER", processed_content)
 
     if stem:
         nltk.download('punkt')
@@ -87,6 +93,11 @@ def process_file(
     return processed_content
 
 class DataTransformer(BaseEstimator, TransformerMixin):
+    """
+    A data transformer to be used in scikit learn pipelines.
+    It processes emails, given as strings, and offers the same
+    hyperparameters as `process_file`
+    """
     def __init__(self,
         strip_header=False,
         lowercase=False,
@@ -95,6 +106,22 @@ class DataTransformer(BaseEstimator, TransformerMixin):
         replace_numbers=False,
         stem=False
     ):
+        """
+        Construct an instance of this transformer.
+
+        Parameters:
+        strip_header (bool): whether the email headers should be
+                             removed from the file content
+        lowercase (bool): whether the file content should be converted to lowercase
+        remove_punctuation (bool): whether the punctuation symbols should be
+                                   removed from the file content
+        replace_urls (bool): whether the urls in the file content should be
+                             replaced by the string "URL"
+        replace_numbers (bool): whether the numbers in the file content should be
+                                replaced by the string "NUMBER"
+        stem (bool): whether stemming (e.g. trim off word endings) should
+     .               be perfomed
+        """
         self.strip_header = strip_header
         self.lowercase = lowercase
         self.remove_punctuation = remove_punctuation
@@ -103,9 +130,21 @@ class DataTransformer(BaseEstimator, TransformerMixin):
         self.stem = stem
     
     def fit(self, X, y = None):
+        """Since this is a pure transformer, the fit method will not do anything."""
         return self
 
     def transform(self, X, y=None):
+        """
+        Process the content of the series X.
+
+        Parameters:
+        X (pd.Series): A panda series containing the content of the emails
+                       as strings.
+        y (pd.Series): The target series. Not used in this implementation.
+
+        Returns:
+        The X series, transformed according to the hyperparameters.
+        """
         return X.map(lambda content: process_file(
             content,
             self.strip_header,
@@ -116,7 +155,7 @@ class DataTransformer(BaseEstimator, TransformerMixin):
             self.stem
         ))
 
-def make_dataset(labeled_files : LabeledFiles) -> pd.DataFrame:
+def _make_dataset(labeled_files : LabeledFiles) -> pd.DataFrame:
     paths, features, labels = zip(*labeled_files)
     return pd.DataFrame({
         "dirpath": paths,
@@ -124,7 +163,7 @@ def make_dataset(labeled_files : LabeledFiles) -> pd.DataFrame:
         "spam": labels
     })
 
-def make_argparser() -> argparse.ArgumentParser:
+def _make_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Load training data from a file and process them.")
 
@@ -178,7 +217,7 @@ def make_argparser() -> argparse.ArgumentParser:
 
     return parser
 
-def make_labeled_paths(data_dir : str, label : bool):
+def _make_labeled_paths(data_dir : str, label : bool):
     for filename in os.listdir(os.path.abspath(data_dir)):
         filepath = os.path.join(data_dir, filename)
         yield (filepath, label)
@@ -190,11 +229,31 @@ def process(spam_dirs, ham_dirs, outfile,
     replace_urls=False,
     replace_numbers=False
 ):
+    """
+    Process the content of the input folders and write the output datasets
+    to an HDF5 archive.
+
+    Parameters:
+    spam_dirs ([str]): List of paths to the folders which contain spam.
+    ham_dirs ([str]): List of paths to the folders which contain ham.
+    outfile (str): Path to the output HDF5 archive.
+    strip_header (bool): Whether the email headers should be
+                         removed from the file content.
+    lowercase (bool): Whether the file content should be converted to lowercase.
+    remove_punctuation (bool): Whether the punctuation symbols should be
+                               removed from the file content.
+    replace_urls (bool): Whether the urls in the file content should be
+                         replaced by the string "URL".
+    replace_numbers (bool): Whether the numbers in the file content should be
+                            replaced by the string "NUMBER".
+    stem (bool): Whether stemming (e.g. trim off word endings) should
+                 be perfomed.
+    """
     labeled_paths = []
     for spam_dir in spam_dirs:
-        labeled_paths.extend(make_labeled_paths(spam_dir, True))
+        labeled_paths.extend(_make_labeled_paths(spam_dir, True))
     for ham_dir in ham_dirs:
-        labeled_paths.extend(make_labeled_paths(ham_dir, False))
+        labeled_paths.extend(_make_labeled_paths(ham_dir, False))
  
     labeled_files = [
         (
@@ -208,10 +267,10 @@ def process(spam_dirs, ham_dirs, outfile,
                 replace_numbers=replace_numbers),
             label
         )
-        for (dirpath, file_content, label) in load_files(labeled_paths)
+        for (dirpath, file_content, label) in _load_files(labeled_paths)
     ]
 
-    ds = make_dataset(labeled_files)
+    ds = _make_dataset(labeled_files)
 
     with pd.HDFStore(outfile) as store:
         split = model_selection.StratifiedShuffleSplit(n_splits=1, test_size=0.2)
@@ -220,7 +279,7 @@ def process(spam_dirs, ham_dirs, outfile,
             store["test"] = ds.loc[test_index]
 
 if __name__ == "__main__":
-    parser = make_argparser()
+    parser = _make_argparser()
     args = parser.parse_args()
 
     process(

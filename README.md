@@ -99,7 +99,45 @@ on the default parameters.
 
 ### API usage
 
-TODO.
+The module `train_model` canb be also used as a library.
+The following API is exposed.
+
+    NAME
+        train_model
+
+    DESCRIPTION
+        Train a model for spam classification using pandas dataframe as input.
+        The dataframe should have the following format.
+
+            Data columns (total 3 columns):
+            #   Column   Non-Null Count  Dtype
+            ---  ------   --------------  -----
+            0   dirpath  7478 non-null   object
+            1   mail     7478 non-null   object
+            2   spam     7478 non-null   bool
+
+    FUNCTIONS
+        train(data: pandas.core.frame.DataFrame, classifier_name: str = 'SGD', gridsearch: int = None)
+            Train a model for spam classification.
+
+            Arguments:
+
+            data            The dataframe used for training the model. It should have
+                            the format described above.
+
+            classifier_name The name of the classifier used for building the model.
+                            The following classifiers are supported:
+                            AdaBoost, Decision Tree, Linear SVM, Nearest Neighbors,
+                            Neural Net, Random, Forest, RBF SVM, SGD.
+
+            gridsearch      The number of iterations for the randomized grid search.
+                            If you input None, the search will be skipped and the model
+                            will be trained using the default hyperparameters
+                            of the classifier.
+
+            Returns:
+                a tuple (search, model) containg the grid search object
+                from scikit learn and the trained model.
 
 ## Prepare dataset
 
@@ -144,7 +182,192 @@ specify them here.
 
 ### API usage
 
-TODO.
+The module `process_data` canb be also used as a library.
+The following API is exposed.
+
+    NAME
+        process_data
+
+    DESCRIPTION
+        Reads emails from some folders and prepare the train and test datasets
+        for the `train_model` module. The folders are also used to assign labels
+        (i.e. the files in a folder are either all spam or all ham).
+
+    CLASSES
+        sklearn.base.BaseEstimator(builtins.object)
+            DataTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin)
+        sklearn.base.TransformerMixin(builtins.object)
+            DataTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin)
+
+        class DataTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin)
+         |  DataTransformer(strip_header=False, lowercase=False, remove_punctuation=False, replace_urls=False, replace_numbers=False, stem=False)
+         |
+         |  A data transformer to be used in scikit learn pipelines.
+         |  It processes emails, given as strings, and offers the same
+         |  hyperparameters as `process_file`
+         |
+         |  Method resolution order:
+         |      DataTransformer
+         |      sklearn.base.BaseEstimator
+         |      sklearn.base.TransformerMixin
+         |      builtins.object
+         |
+         |  Methods defined here:
+         |
+         |  __init__(self, strip_header=False, lowercase=False, remove_punctuation=False, replace_urls=False, replace_numbers=False, stem=False)
+         |         Construct an instance of this transformer.
+         |
+         |         Parameters:
+         |         strip_header (bool): whether the email headers should be
+         |                              removed from the file content
+         |         lowercase (bool): whether the file content should be converted to lowercase
+         |         remove_punctuation (bool): whether the punctuation symbols should be
+         |                                    removed from the file content
+         |         replace_urls (bool): whether the urls in the file content should be
+         |                              replaced by the string "URL"
+         |         replace_numbers (bool): whether the numbers in the file content should be
+         |                                 replaced by the string "NUMBER"
+         |         stem (bool): whether stemming (e.g. trim off word endings) should
+         |      .               be perfomed
+         |
+         |  fit(self, X, y=None)
+         |      Since this is a pure transformer, the fit method will not do anything.
+         |
+         |  transform(self, X, y=None)
+         |      Process the content of the series X.
+         |
+         |      Parameters:
+         |      X (pd.Series): A panda series containing the content of the emails
+         |                     as strings.
+         |      y (pd.Series): The target series. Not used in this implementation.
+         |
+         |      Returns:
+         |      The X series, transformed according to the hyperparameters.
+         |
+         |  ----------------------------------------------------------------------
+         |  Methods inherited from sklearn.base.BaseEstimator:
+         |
+         |  __getstate__(self)
+         |
+         |  __repr__(self, N_CHAR_MAX=700)
+         |      Return repr(self).
+         |
+         |  __setstate__(self, state)
+         |
+         |  get_params(self, deep=True)
+         |      Get parameters for this estimator.
+         |
+         |      Parameters
+         |      ----------
+         |      deep : bool, default=True
+         |          If True, will return the parameters for this estimator and
+         |          contained subobjects that are estimators.
+         |
+         |      Returns
+         |      -------
+         |      params : dict
+         |          Parameter names mapped to their values.
+         |
+         |  set_params(self, **params)
+         |      Set the parameters of this estimator.
+         |
+         |      The method works on simple estimators as well as on nested objects
+         |      (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
+         |      parameters of the form ``<component>__<parameter>`` so that it's
+         |      possible to update each component of a nested object.
+         |
+         |      Parameters
+         |      ----------
+         |      **params : dict
+         |          Estimator parameters.
+         |
+         |      Returns
+         |      -------
+         |      self : estimator instance
+         |          Estimator instance.
+         |
+         |  ----------------------------------------------------------------------
+         |  Data descriptors inherited from sklearn.base.BaseEstimator:
+         |
+         |  __dict__
+         |      dictionary for instance variables (if defined)
+         |
+         |  __weakref__
+         |      list of weak references to the object (if defined)
+         |
+         |  ----------------------------------------------------------------------
+         |  Methods inherited from sklearn.base.TransformerMixin:
+         |
+         |  fit_transform(self, X, y=None, **fit_params)
+         |      Fit to data, then transform it.
+         |
+         |      Fits transformer to `X` and `y` with optional parameters `fit_params`
+         |      and returns a transformed version of `X`.
+         |
+         |      Parameters
+         |      ----------
+         |      X : array-like of shape (n_samples, n_features)
+         |          Input samples.
+         |
+         |      y :  array-like of shape (n_samples,) or (n_samples, n_outputs),                 default=None
+         |          Target values (None for unsupervised transformations).
+         |
+         |      **fit_params : dict
+         |          Additional fit parameters.
+         |
+         |      Returns
+         |      -------
+         |      X_new : ndarray array of shape (n_samples, n_features_new)
+         |          Transformed array.
+
+    FUNCTIONS
+        process(spam_dirs, ham_dirs, outfile, strip_headers=False, lowercase=False, remove_punctuation=False, replace_urls=False, replace_numbers=False)
+            Process the content of the input folders and write the output datasets
+            to an HDF5 archive.
+
+            Parameters:
+            spam_dirs ([str]): List of paths to the folders which contain spam.
+            ham_dirs ([str]): List of paths to the folders which contain ham.
+            outfile (str): Path to the output HDF5 archive.
+            strip_header (bool): Whether the email headers should be
+                                 removed from the file content.
+            lowercase (bool): Whether the file content should be converted to lowercase.
+            remove_punctuation (bool): Whether the punctuation symbols should be
+                                       removed from the file content.
+            replace_urls (bool): Whether the urls in the file content should be
+                                 replaced by the string "URL".
+            replace_numbers (bool): Whether the numbers in the file content should be
+                                    replaced by the string "NUMBER".
+            stem (bool): Whether stemming (e.g. trim off word endings) should
+                         be perfomed.
+
+        process_file(content: str, strip_header=False, lowercase=False, remove_punctuation=False, replace_urls=False, replace_numbers=False, stem=False) -> str
+            Process the file content, by performing the actions specified in the
+            following parameters.
+
+            Parameters:
+            content (str): the content of the file
+            strip_header (bool): whether the email headers should be
+                                 removed from the file content
+            lowercase (bool): whether the file content should be converted to lowercase
+            remove_punctuation (bool): whether the punctuation symbols should be
+                                       removed from the file content
+            replace_urls (bool): whether the urls in the file content should be
+                                 replaced by the string "URL"
+            replace_numbers (bool): whether the numbers in the file content should be
+                                    replaced by the string "NUMBER"
+            stem (bool): whether stemming (e.g. trim off word endings) should
+                         be perfomed
+
+            Returns:
+            str: the processed file content
+
+    DATA
+        LabeledFiles = typing.Generator[typing.Tuple[str, str, bool], NoneType...
+        LabeledPaths = typing.List[typing.Tuple[str, bool]]
+
+    FILE
+        c:\users\giacomodantonio\documents\ml\spam\process_data.py
 
 ## Make a prediction
 
@@ -175,4 +398,23 @@ they will be printend on stdout.
 
 ### API usage
 
-TODO.
+The module `predict` canb be also used as a library.
+The following API is exposed.
+
+    NAME
+        predict - Classify emails (spam or ham) using a model trained with the train_model module.
+
+    FUNCTIONS
+        predict(texts, model)
+            Classify email content using the given model.
+            The model must have been built using the module train_model.
+
+            Parameters:
+            texts ([str]): The content of the emails to be classified.
+            model (object): The model to be used for classification.
+
+            Returns:
+            A list of booleans, representing the predictions for the input texts.
+
+    FILE
+        c:\users\giacomodantonio\documents\ml\spam\predict.py
