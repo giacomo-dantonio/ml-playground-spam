@@ -366,9 +366,6 @@ The following API is exposed.
         LabeledFiles = typing.Generator[typing.Tuple[str, str, bool], NoneType...
         LabeledPaths = typing.List[typing.Tuple[str, bool]]
 
-    FILE
-        c:\users\giacomodantonio\documents\ml\spam\process_data.py
-
 ## Make a prediction
 
 The module `predict` can be used to make predictions on a set of files.
@@ -415,6 +412,3 @@ The following API is exposed.
 
             Returns:
             A list of booleans, representing the predictions for the input texts.
-
-    FILE
-        c:\users\giacomodantonio\documents\ml\spam\predict.py
